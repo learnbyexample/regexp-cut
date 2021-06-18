@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+# initialize input and output field separators as single space
+# which is same default as awk
+d=' '
+o=' '
+
+# - means print all fields
+# this helps to format input with value of output field separator
+f='-'
+
+# flag variable to check if output field separator was set by the user or not
+ofs_flag='false'
+
+# first : makes it silent error reporting mode
+# d f o options require arguments if used
+while getopts ":d:f:o:" opt; do
+  case $opt in
+    d)
+      d="$OPTARG"
+      ;;
+    f)
+      f="$OPTARG"
+      ;;
+    o)
+      o="$OPTARG"
+      ofs_flag='true'
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+# Discard the options and sentinel --
+shift "$((OPTIND-1))"
+
+# partially mimic cut's default output field separator
+# if -o option isn't used and input field separator is single character
+# set output field separator same as input field separator
+if [[ "$ofs_flag" == 'false' && ${#d} == 1 ]]; then
+  o="$d"
+fi
+
+mawk -F "$d" -v fields="$f" -v OFS="$o" '
+        BEGIN{ fn = split(fields, fields_arr, /,/) }
+        {
+          sep = ""
+          for(i=1; i<=fn; i++){
+            rn = split(fields_arr[i], range, /-/)
+
+            start = range[1] ? range[1] : 1
+            if(start > NF) start = NF
+            
+            end = (rn == 1) ? start : (range[2] ? range[2] : NF)
+            if(end > NF) end = NF
+
+            for(j=start; j<=end; j++){
+              printf "%s%s", sep, $j
+              sep = OFS
+            }
+          }
+          print ""
+        }' "$@"
+
