@@ -39,7 +39,7 @@ $ printf '1 2 3 4 5\na b c d e\n' | rcut -f2-3,5,1,2-4
 b c e a b c d
 ```
 
-See [examples/Examples.md](Examples.md) for more examples.
+See [Examples.md](examples/Examples.md) for more examples.
 
 ## TODO
 
