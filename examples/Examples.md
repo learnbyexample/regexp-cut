@@ -84,7 +84,7 @@ Chemistry:Maths
 80:78
 ```
 
-Input field separator can be multi-character as well:
+Input field separator can be multiple characters as well:
 
 ```bash
 $ echo 'apple:-:fig:-:guava' | rcut -d:-: -f2
@@ -97,7 +97,7 @@ fig apple
 
 ## Selecting range of fields
 
-Range of fields can be specified separated by a `-` character.
+Range of fields can be specified separated by a `-` character. If negative indexing option `-n` is enabled (discussed later), the separator changes to `:` character. 
 
 ```bash
 $ printf '1 2 3 4 5\na b c d e\n' | rcut -f1-3
@@ -110,7 +110,7 @@ $ printf '1 2 3 4 5\na b c d e\n' | rcut -f2-3,5,1,2-4
 b c e a b c d
 ```
 
-Beginning or ending or both can be ignored for a range. Here's some examples:
+Beginning or ending or both can be ignored for a range.
 
 ```bash
 # if - alone is used, it indicates all the fields
@@ -132,6 +132,8 @@ ball,cat
 
 ## Regexp based input field separator
 
+Regular expression syntax will depend on the `awk` version.
+
 ```bash
 $ echo 'apple  : fig :    guava' | rcut -d' *: *' -f2
 fig
@@ -144,9 +146,79 @@ $ echo 'load;err_msg--\ant,r2..not' | rcut -d'[^[:alnum:]_]+'
 load err_msg ant r2 not
 ```
 
-## Miscellaneous
+## Negative indexing
+
+When `-n` option is used, you can specify `-1` for last field, `-2` for second-last field and so on. You'll have to use `:` character for ranges.
 
 ```bash
+# last field
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf-1
+cat
+5
+
+# last field and third-last field
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf-1,-3
+cat apple
+5 3
+
+# first and last field
+$ echo 'Sample123string42with777numbers' | rcut -d'[0-9]+' -nf1,-1
+Sample numbers
+
+# range separator is : when -n is active
+# last four fields
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf-4:
+apple ball cat
+2 3 4 5
+```
+
+## Complement
+
+The `-c` option will invert the field selections. Unlike the normal field extraction, order doesn't matter. All the fields except those specified by the `-f` option will be displayed using the same order as input.
+
+```bash
+# except second field
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -cf2
+apple cat
+1 3 4 5
+
+# except first and third fields, order doesn't matter
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -cf3,1
+ball
+2 4 5
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -cf2-3
+apple
+1 4 5
+
+# except last two fields
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -cnf-2:
+apple
+1 2 3
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -cnf-4
+ball cat
+1 3 4 5
+```
+
+## Empty separators
+
+```bash
+$ echo 'apple' | rcut -d '' -f2-4
+p p l
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -o '' -f1,3
+applecat
+13
+```
+
+## Unicode
+
+Unicode processing might work for some cases depending on the current locale.
+
+```bash
+# single character input field separator
+# so output field separator is also same as input separator
 $ echo '1α2α3' | rcut -dα -f3,1,2
 3α1α2
 
@@ -156,16 +228,107 @@ $ echo '1α2α3' | LC_ALL=C rcut -dα -f3,1,2
 3 1 2
 ```
 
-Minimum field number is forced to be `1`. Maximum field number is forced to be the last field of that particular input line.
+## Corner cases
+
+Minimum field number is forced to be `1`.
 
 ```bash
 $ printf 'apple ball cat\n1 2 3 4 5' | rcut -f0
 apple
 1
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f0-0
+apple
+1
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f1-0
+apple
+1
+
 $ printf 'apple ball cat\n1 2 3 4 5' | rcut -f22
+cat
+5
+
+# first line has only three fields, so -4 becomes 1 (since minimum is 1)
+# second line has five fields, so -4 becomes 2
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf-4,-1
+apple cat
+2 5
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf-100
+apple
+1
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf:-100
+apple
+1
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf-200:-100
+apple
+1
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -cnf-100
+ball cat
+2 3 4 5
+```
+
+Maximum field number is forced to be the last field of that particular input line.
+
+```bash
+# no extra output field separator for first line even though it has only 3 fields
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -o, -f-4
+apple,ball,cat
+1,2,3,4
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f4
+cat
+4
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f100
 cat
 5
 ```
 
-*More to come*
+## Errors
+
+Space between the option and empty string is mandatory. Otherwise, further options if any would become the argument.
+
+```bash
+# -f2-4 will get treated as argument for -d
+$ echo 'apple' | rcut -d'' -f2-4
+apple
+$ echo 'apple' | rcut -d''
+Option -d requires an argument.
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -o'' -f1,3
+apple-f1,3ball-f1,3cat
+1-f1,32-f1,33-f1,34-f1,35
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -o''
+Option -o requires an argument.
+```
+
+Bad arguments for `-f` option.
+
+```bash
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f1a
+Field number can only use integer values
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -fx
+Field number can only use integer values
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f1.1
+Field number can only use integer values
+
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f ''
+Field number can only use integer values
+
+# can't use : if -n option isn't provided
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -f1:3
+Field number can only use integer values
+```
+
+Invalid options.
+
+```bash
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -t
+Invalid option: -t
+$ echo '123' | rcut -x
+Invalid option: -x
+```
 

@@ -1,14 +1,43 @@
 # regexp-cut
 
-Use awk to provide cut like syntax for field extraction.
+Uses `awk` to provide `cut` like syntax for field extraction. The command name is `rcut`.
 
 :warning: :warning: Work under construction!
+
+<br>
 
 ## Motivation
 
 `cut`'s syntax is handy for many field extraction problems. But it doesn't allow multi-character or regexp delimiters. So, this project aims to provide `cut` like syntax for those cases. Currently uses `mawk` in a `bash` script.
 
+:information_source: **Note** that `rcut` isn't feature compatible or a replacement for the `cut` command. `rcut` helps when you need features like regexp field separator.
+
+<br>
+
+## Features
+
+* Default field separation is same as `awk`
+* Both input (`-d`) and output (`-o`) field separators can be multiple characters
+* Input field separator can use regular expressions
+    * this script uses `mawk`, you can change it to `gawk` for better regexp support
+* If input field separator is a single character, output field separator will also be this same character
+* Field range can be specified by using `-` separator (same as `cut`)
+    * `-` by itself means all the fields (this is also the default if `-f` option isn't used at all)
+    * if start of the range isn't given, default is `1`
+    * if end of the range isn't given, default is last field of a line
+* Negative indexing is allowed if you use `-n` option
+    * `-1` means the last field, `-2` means the second-last field and so on
+    * you'll have to use `:` to specify field ranges
+* Multiple fields and ranges can be separated using `,` character (same as `cut`)
+* Unlike `cut`, order matters with the `-f` option and field/range duplication is also allowed
+    * this assumes `-c` (complement) is not active
+* Using `-c` option will print all the fields in the same order as input except the fields specified by `-f` option
+* Minimum field number is forced to be `1`
+* Maximum field number is forced to be last field of a line
+
 :warning: :warning: Work under construction!
+
+<br>
 
 ## Examples
 
@@ -37,18 +66,46 @@ Sample numbers
 $ printf '1 2 3 4 5\na b c d e\n' | rcut -f2-3,5,1,2-4
 2 3 5 1 2 3 4
 b c e a b c d
+
+# last field
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -nf-1
+cat
+5
+
+# except last two fields
+$ printf 'apple ball cat\n1 2 3 4 5' | rcut -cnf-2:
+apple
+1 2 3
 ```
 
-See [Examples.md](examples/Examples.md) for more examples.
+See [Examples.md](examples/Examples.md) for many more examples.
+
+<br>
 
 ## TODO
 
-* Add complement option
-* Negative indexing
+* Step value other than `1` for field range
 * Option to control lines without delimiters
-* And many more...
+* What to do if start of the range is greater than end?
+* And possibly more...
 
-## Other tools
+<br>
 
-* [choose](https://github.com/theryangeary/choose) - negative indexing, regexp based delimiters, etc
+## Similar tools
+
+* [choose](https://github.com/theryangeary/choose) — negative indexing, regexp based delimiters, etc
+
+<br>
+
+## Contributing
+
+* Please open an issue for typos/bugs/suggestions/etc
+* **Even for pull requests, open an issue for discussion before submitting PRs**
+* In case you need to reach me, mail me at `echo 'bGVhcm5ieWV4YW1wbGUubmV0QGdtYWlsLmNvbQo=' | base64 --decode` or send a DM via [twitter](https://twitter.com/learn_byexample)
+
+<br>
+
+## License
+
+This project is licensed under MIT, see [LICENSE](./LICENSE) file for details.
 

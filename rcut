@@ -6,64 +6,114 @@ d=' '
 o=' '
 
 # - means print all fields
-# this helps to format input with value of output field separator
+# this default helps to format input with value of output field separator
 f='-'
+
+# allow negative indexing if set
+n=''
+
+# complement fields if set
+c=''
 
 # flag variable to check if output field separator was set by the user or not
 ofs_flag='false'
 
 # first : makes it silent error reporting mode
 # d f o options require arguments if used
-while getopts ":d:f:o:" opt; do
-  case $opt in
-    d)
-      d="$OPTARG"
-      ;;
-    f)
-      f="$OPTARG"
-      ;;
-    o)
-      o="$OPTARG"
-      ofs_flag='true'
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
-    :)
-      echo "Option -$OPTARG requires an argument." >&2
-      exit 1
-      ;;
-  esac
+# n c options do not accept arguments
+while getopts ":d:f:o:nc" opt; do
+    case $opt in
+        d)
+            d="$OPTARG"
+            ;;
+        f)
+            f="$OPTARG"
+            ;;
+        o)
+            o="$OPTARG"
+            ofs_flag='true'
+            ;;
+        n)
+            n=':'
+            ;;
+        c)
+            c='1'
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
 done
 # Discard the options and sentinel --
 shift "$((OPTIND-1))"
+
+# argument to -f option cannot be empty
+# it can have only digits comma and hyphen characters
+# if -n is active, colon is also allowed
+if [[ ! "$f" =~ ^[${n}0-9,-]+$ ]]; then
+    echo "Field number can only use integer values" >&2
+    exit 1
+fi
 
 # partially mimic cut's default output field separator
 # if -o option isn't used and input field separator is single character
 # set output field separator same as input field separator
 if [[ "$ofs_flag" == 'false' && ${#d} == 1 ]]; then
-  o="$d"
+    o="$d"
 fi
 
-mawk -F "$d" -v fields="$f" -v OFS="$o" '
-        BEGIN{ fn = split(fields, fields_arr, /,/) }
-        {
-          sep = ""
-          for(i=1; i<=fn; i++){
-            rn = split(fields_arr[i], range, /-/)
+mawk -F "$d" -v fields="$f" -v OFS="$o" -v neg="$n" -v complement="$c" '
+    BEGIN{
+        fn = split(fields, fields_arr, /,/)
+    }
 
-            start = range[1] ? range[1] : 1
-            if(start > NF) start = NF
-            
-            end = (rn == 1) ? start : (range[2] ? range[2] : NF)
-            if(end > NF) end = NF
+    {
+        sep = ""
 
-            for(j=start; j<=end; j++){
-              printf "%s%s", sep, $j
-              sep = OFS
+        for(i=1; i<=fn; i++){
+            if(neg){
+                rn = split(fields_arr[i], range, /:/)
+                if(range[1] ~ /^-/) range[1] += NF + 1
+                if(range[2] ~ /^-/) range[2] += NF + 1
             }
-          }
-          print ""
-        }' "$@"
+            else
+                rn = split(fields_arr[i], range, /-/)
+
+            start = range[1] <= 0 ? 1: range[1]
+            if(start > NF) start = NF
+
+            if(rn == 1)
+                end = start
+            else if(range[2] == "" || range[2] > NF)
+                end = NF
+            else if(range[2] <= 0)
+                end = 1
+            else
+                end = range[2]
+
+            for(j=start; j<=end; j++)
+                if(complement)
+                    ignore_fields[j]
+                else {
+                    printf "%s%s", sep, $j
+                    sep = OFS
+                }
+        }
+
+        if(complement){
+            for(k=1; k<=NF; k++)
+                if(!(k in ignore_fields)){
+                    printf "%s%s", sep, $k
+                    sep = OFS
+                }
+            delete ignore_fields
+        }
+
+        print ""
+    }' "$@"
 
