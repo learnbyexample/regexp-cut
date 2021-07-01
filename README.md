@@ -21,6 +21,8 @@ Uses `awk` to provide `cut` like syntax for field extraction. The command name i
 * Input field separator can use regular expressions
     * this script uses `mawk`, you can change it to `gawk` for better regexp support
 * If input field separator is a single character, output field separator will also be this same character
+* Fixed string input field separator can be enabled by using the `-F` option
+    * if `-o` is *not* used, value passed to the `-d` option will be set as the output field separator
 * Field range can be specified by using `-` separator (same as `cut`)
     * `-` by itself means all the fields (this is also the default if `-f` option isn't used at all)
     * if start of the range isn't given, default is `1`
@@ -61,6 +63,10 @@ fig
 # regexp delimiter
 $ echo 'Sample123string42with777numbers' | rcut -d'[0-9]+' -f1,4
 Sample numbers
+
+# fixed string delimiter
+$ echo '123)(%)*#^&(*@#.[](\\){1}\xyz' | rcut -Fd')(%)*#^&(*@#.[](\\){1}\' -f1,2 -o,
+123,xyz
 
 # multiple ranges can be specified, order matters
 $ printf '1 2 3 4 5\na b c d e\n' | rcut -f2-3,5,1,2-4

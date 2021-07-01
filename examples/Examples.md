@@ -146,6 +146,32 @@ $ echo 'load;err_msg--\ant,r2..not' | rcut -d'[^[:alnum:]_]+'
 load err_msg ant r2 not
 ```
 
+## Fixed string input field separator
+
+Using `-F` option will cause the content passed to `-d` option to be matched literally. If `-o` option isn't set, value passed to the `-d` option will be used.
+
+```bash
+$ echo '1\x5e2' | rcut -Fd'\x5e' -f1,2,1
+1\x5e2\x5e1
+$ echo 'a\b' | rcut -Fd'\' -f1,2,1
+a\b\a
+$ echo 'a\\b' | rcut -Fd'\\' -f1,2,1
+a\\b\\a
+
+$ echo '123)(%)*#^&(*@#.[](\\){1}\xyz' | rcut -Fd')(%)*#^&(*@#.[](\\){1}\' -f1
+123
+$ echo '123)(%)*#^&(*@#.[](\\){1}\xyz' | rcut -Fd')(%)*#^&(*@#.[](\\){1}\' -f2
+xyz
+
+# output should be same as input here
+$ echo '123)(%)*#^&(*@#.[](\\){1}\xyz' | rcut -Fd')(%)*#^&(*@#.[](\\){1}\' -f1,2
+123)(%)*#^&(*@#.[](\\){1}\xyz
+
+# saner output with , as output delimiter
+$ echo '123)(%)*#^&(*@#.[](\\){1}\xyz' | rcut -Fd')(%)*#^&(*@#.[](\\){1}\' -f1,2 -o,
+123,xyz
+```
+
 ## Negative indexing
 
 When `-n` option is used, you can specify `-1` for last field, `-2` for second-last field and so on. You'll have to use `:` character for ranges.
@@ -283,6 +309,17 @@ cat
 $ printf 'apple ball cat\n1 2 3 4 5' | rcut -f100
 cat
 5
+```
+
+Backslash as field delimiters.
+
+```bash
+$ echo 'a\b' | rcut -d'\' -f1,2,1
+a\b\a
+$ echo 'a,b' | rcut -d',' -o'\' -f1,2,1
+a\b\a
+$ echo 'a\b' | rcut -d'\' -o'\' -f1,2,1
+a\b\a
 ```
 
 ## Errors

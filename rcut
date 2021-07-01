@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 
+# similar to grep's -F option
+# treats the input field separator(IFS) literally
+F=''
+
 # initialize input and output field separators as single space
 # which is same default as awk
 d=' '
 o=' '
 
 # - means print all fields
-# this default helps to format input with value of output field separator
+# this default helps to format input with value of output field separator(OFS)
 f='-'
 
 # allow negative indexing if set
@@ -20,8 +24,8 @@ ofs_flag='false'
 
 # first : makes it silent error reporting mode
 # d f o options require arguments if used
-# n c options do not accept arguments
-while getopts ":d:f:o:nc" opt; do
+# n c F options do not accept arguments
+while getopts ":d:f:o:ncF" opt; do
     case $opt in
         d)
             d="$OPTARG"
@@ -38,6 +42,9 @@ while getopts ":d:f:o:nc" opt; do
             ;;
         c)
             c='1'
+            ;;
+        F)
+            F='1'
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -60,11 +67,19 @@ if [[ ! "$f" =~ ^[${n}0-9,-]+$ ]]; then
     exit 1
 fi
 
-# partially mimic cut's default output field separator
-# if -o option isn't used and input field separator is single character
-# set output field separator same as input field separator
-if [[ "$ofs_flag" == 'false' && ${#d} == 1 ]]; then
-    o="$d"
+# if -o option isn't used, two cases where OFS will set to same value as IFS
+# 1) if -F option is used
+# 2) if IFS is a single character (partially mimics cut command behavior)
+# \ character needs to be doubled since it is a metacharacter in awk strings
+if [[ "$ofs_flag" == 'false' && ( ${#d} == 1 || "$F" == '1' ) ]] ; then
+    o="${d//\\/\\\\}"
+fi
+
+# if -F option is used, change IFS such that it matches literally
+if [[ "$F" == '1' ]] ; then
+    d="$(echo "$d" | mawk '{gsub(/[^^\\]/, "[&]");
+                            gsub(/\\/, "\\x5c\\x5c");
+                            gsub(/\^/, "\\x5c\\x5e")} 1')"
 fi
 
 mawk -F "$d" -v fields="$f" -v OFS="$o" -v neg="$n" -v complement="$c" '
