@@ -88,6 +88,17 @@ See [Examples.md](examples/Examples.md) for many more examples.
 
 <br>
 
+## Tests
+
+You can use [script.awk](examples/script.awk) to check if all the example code snippets are working as expected. 
+
+```bash
+$ cd examples/
+$ awk -f script.awk Examples.md
+```
+
+<br>
+
 ## TODO
 
 * Step value other than `1` for field range
