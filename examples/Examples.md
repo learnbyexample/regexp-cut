@@ -254,6 +254,21 @@ $ echo '1α2α3' | LC_ALL=C rcut -dα -f3,1,2
 3 1 2
 ```
 
+## Switch to gawk
+
+```bash
+# mawk doesn't support {} form of quantifiers
+# see https://unix.stackexchange.com/q/506119 for more details
+$ echo '1aa2aa3' | rcut -d'a{2}' -f2
+1aa2aa3
+$ echo '1aa2aa3' | rcut -d'aa' -f2
+2
+
+# -g option will use gawk, which supports {} quantifiers
+$ echo '1aa2aa3' | rcut -gd'a{2}' -f2
+2
+```
+
 ## Corner cases
 
 Minimum field number is forced to be `1`.
@@ -319,6 +334,10 @@ a\b\a
 $ echo 'a,b' | rcut -d',' -o'\' -f1,2,1
 a\b\a
 $ echo 'a\b' | rcut -d'\' -o'\' -f1,2,1
+a\b\a
+
+# gawk needs special attention if -o is \
+$ echo 'a,b' | rcut -d',' -go'\' -f1,2,1
 a\b\a
 ```
 

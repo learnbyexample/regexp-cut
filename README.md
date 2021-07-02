@@ -19,7 +19,8 @@ Uses `awk` to provide `cut` like syntax for field extraction. The command name i
 * Default field separation is same as `awk`
 * Both input (`-d`) and output (`-o`) field separators can be multiple characters
 * Input field separator can use regular expressions
-    * this script uses `mawk`, you can change it to `gawk` for better regexp support
+    * this script uses `mawk` by default
+    * you can change it to `gawk` for better regexp support with `-g` option
 * If input field separator is a single character, output field separator will also be this same character
 * Fixed string input field separator can be enabled by using the `-F` option
     * if `-o` is *not* used, value passed to the `-d` option will be set as the output field separator
@@ -82,6 +83,10 @@ cat
 $ printf 'apple ball cat\n1 2 3 4 5' | rcut -cnf-2:
 apple
 1 2 3
+
+# -g option will switch to gawk
+$ echo '1aa2aa3' | rcut -gd'a{2}' -f2
+2
 ```
 
 See [Examples.md](examples/Examples.md) for many more examples.
