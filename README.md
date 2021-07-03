@@ -35,6 +35,8 @@ Uses `awk` to provide `cut` like syntax for field extraction. The command name i
 * Unlike `cut`, order matters with the `-f` option and field/range duplication is also allowed
     * this assumes `-c` (complement) is not active
 * Using `-c` option will print all the fields in the same order as input except the fields specified by `-f` option
+* Using `-s` option will suppress lines not matching the input field separator
+    * unlike `cut`, this will work even if `-c` is used as well
 * Minimum field number is forced to be `1`
 * Maximum field number is forced to be last field of a line
 
@@ -84,6 +86,11 @@ $ printf 'apple ball cat\n1 2 3 4 5' | rcut -cnf-2:
 apple
 1 2 3
 
+# suppress lines without input field delimiter
+$ printf '1,2,3,4\nhello\na,b,c\n' | rcut -sd, -f2
+2
+b
+
 # -g option will switch to gawk
 $ echo '1aa2aa3' | rcut -gd'a{2}' -f2
 2
@@ -107,7 +114,6 @@ $ awk -f script.awk Examples.md
 ## TODO
 
 * Step value other than `1` for field range
-* Option to control lines without delimiters
 * What to do if start of the range is greater than end?
 * And possibly more...
 

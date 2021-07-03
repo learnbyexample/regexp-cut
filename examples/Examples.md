@@ -238,6 +238,37 @@ applecat
 13
 ```
 
+## Suppress lines without delimiters
+
+The `-s` option behaves similarly to the `-s` option provided by `cut`. This will suppress a line from being printed if it doesn't contain the given IFS.
+
+```bash
+$ printf '1,2,3,4\nhello\na,b,c\n'
+1,2,3,4
+hello
+a,b,c
+
+$ printf '1,2,3,4\nhello\na,b,c\n' | rcut -d, -f2
+2
+hello
+b
+$ printf '1,2,3,4\nhello\na,b,c\n' | rcut -sd, -f2
+2
+b
+```
+
+However, the behavior differs when `-c` option is used as well. `cut` gives an error, but `rcut` will continue to suppress lines not containing IFS.
+
+```bash
+$ printf '1,2,3,4\nhello\na,b,c\n' | cut -csd, -f2
+cut: only one type of list may be specified
+Try 'cut --help' for more information.
+
+$ printf '1,2,3,4\nhello\na,b,c\n' | rcut -csd, -f2
+1,3,4
+a,c
+```
+
 ## Unicode
 
 Unicode processing might work for some cases depending on the current locale.

@@ -23,13 +23,16 @@ n=''
 # complement fields if set
 c=''
 
+# suppress lines not matching IFS
+s=''
+
 # flag variable to check if output field separator was set by the user or not
 ofs_flag='false'
 
 # first : makes it silent error reporting mode
 # d f o options require arguments if used
-# n c g F options do not accept arguments
-while getopts ":d:f:o:ncgF" opt; do
+# n c g s F options do not accept arguments
+while getopts ":d:f:o:ncgsF" opt; do
     case $opt in
         d)
             d="$OPTARG"
@@ -49,6 +52,9 @@ while getopts ":d:f:o:ncgF" opt; do
             ;;
         g)
             cmd='gawk'
+            ;;
+        s)
+            s='1'
             ;;
         F)
             F='1'
@@ -90,16 +96,20 @@ if [[ "$F" == '1' ]] ; then
 fi
 
 # corner case: when -o is \ character (needed for gawk)
+# since -o is used, this isn't covered by earlier \ doubling
 if [[ "$o" == '\' ]] ; then
     o='\\'
 fi
 
-"$cmd" -F "$d" -v fields="$f" -v OFS="$o" -v neg="$n" -v complement="$c" '
+"$cmd" -F "$d" -v fields="$f" -v OFS="$o" -v neg="$n" -v complement="$c" -v suppress="$s" '
     BEGIN{
         fn = split(fields, fields_arr, /,/)
     }
 
     {
+        if(suppress && NF<=1)
+            next
+
         sep = ""
 
         for(i=1; i<=fn; i++){
