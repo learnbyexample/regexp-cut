@@ -255,14 +255,6 @@ b
 $ printf '1,2,3,4\nhello\na,b,c\n' | rcut -sd, -f2
 2
 b
-```
-
-However, the behavior differs when `-c` option is used as well. `cut` gives an error, but `rcut` will continue to suppress lines not containing IFS.
-
-```bash
-$ printf '1,2,3,4\nhello\na,b,c\n' | cut -csd, -f2
-cut: only one type of list may be specified
-Try 'cut --help' for more information.
 
 $ printf '1,2,3,4\nhello\na,b,c\n' | rcut -csd, -f2
 1,3,4

@@ -36,7 +36,6 @@ Uses `awk` to provide `cut` like syntax for field extraction. The command name i
     * this assumes `-c` (complement) is not active
 * Using `-c` option will print all the fields in the same order as input except the fields specified by `-f` option
 * Using `-s` option will suppress lines not matching the input field separator
-    * unlike `cut`, this will work even if `-c` is used as well
 * Minimum field number is forced to be `1`
 * Maximum field number is forced to be last field of a line
 
