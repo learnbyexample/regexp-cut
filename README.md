@@ -120,6 +120,7 @@ $ awk -f script.awk Examples.md
 
 ## Similar tools
 
+* [hck](https://github.com/sstadick/hck) — close to drop in replacement for `cut` that can use a regex delimiter, works on compressed files, etc
 * [choose](https://github.com/theryangeary/choose) — negative indexing, regexp based delimiters, etc
 
 <br>
